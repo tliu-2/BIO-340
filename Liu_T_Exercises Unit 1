@@ -1,0 +1,14 @@
+1. If you ran the ls command while in the Jesse Directory, what output would you get?
+    Writing, Biology would be the output.
+
+2. If you ran ls ../../ from the Jesse Directory, what output would you get?
+    Users, bin, and dev would be the output.
+
+3. If you ran the command cd / which directory would you move to?
+    cd / would move us back to the root directory.
+
+4. Assume that you had run the above command (cd /) and moved to a new directory. Write a command that would get you back to the Jesse directory.
+    cd ./Users/Jesse
+
+5. What is the relative path from the Jesse directory to dev?
+    cd ../../dev
