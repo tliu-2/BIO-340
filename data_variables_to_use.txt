@@ -1,0 +1,14 @@
+Columns to use:
+DMDHRAGZ - Person's Age in Years
+DMDHREDZ - Person's Education Level
+DMDHRGND - Person's Gender
+INDFMIN2 - Total Family Income in Dollars
+INDFMPIR - Ratio of famaily income to poverity guidlines
+INDHHIN2 - Total household income
+SEQN - Respondent Seq Number (PRIMARY KEY + FOREIGN KEYS ON ALL TABLES USE THIS TO JOIN)
+LUXSIQR - Stiffness interquartile range of final stiffness measures
+LUXSIQRM - Ratio of stiffness IQRe / median E stiffness value
+DR1_320Z - Total plain water drank yesterday (first day)
+DR2_320Z - Total plain water drank yesterday (second day)
+DR1TPROT - Total protein intake (first day)
+DR2TPROT - Total protein intake (second day)
