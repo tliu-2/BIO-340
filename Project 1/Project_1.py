@@ -7,6 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 import seaborn as sns
+import statsmodels.api as sm
 
 
 def set_fatty_liver_categories(stiffness):
@@ -153,11 +154,12 @@ def calculate_bmi(weight, height):
 
 
 if __name__ == '__main__':
+
     # Import necessary files.
-    demographics = pd.read_csv('Z:/School/BIO-340/Project 1/DEMO_J.csv', encoding='latin1')
-    liver_csv = pd.read_csv('Z:/School/BIO-340/Project 1/LUX_J.csv', encoding='latin1')
-    dietary_csv = pd.read_csv('Z:/School/BIO-340/Project 1/DR1TOT_J.csv', encoding='latin1')
-    body_csv = pd.read_csv('Z:/School/BIO-340/Project 1/BMX_J.csv', encoding='latin1')
+    demographics = pd.read_csv('./DEMO_J.csv', encoding='latin1')
+    liver_csv = pd.read_csv('./LUX_J.csv', encoding='latin1')
+    dietary_csv = pd.read_csv('./DR1TOT_J.csv', encoding='latin1')
+    body_csv = pd.read_csv('./BMX_J.csv', encoding='latin1')
 
     # Select columns of interest - see data_variables_to_use.txt for descritpions.
     demo_x = pd.DataFrame(demographics[['SEQN', 'DMDHRAGZ', 'DMDHREDZ', 'INDHHIN2', 'RIAGENDR']])
@@ -190,13 +192,12 @@ if __name__ == '__main__':
     gender = pd.get_dummies(data_df['RIAGENDR'].apply(adjust_gender_values))
     bmi = pd.get_dummies(data_df.apply(lambda x: calculate_bmi(x['BMXWT'], x['BMXHT']), axis=1))
 
+
     liver_damage = pd.get_dummies(data_df['LUXSMED'].apply(set_fatty_liver_categories))
     fatty_liver = data_df['LUXCAPM'].apply(adjust_cap_values)
 
     # df to input into logistic regression
-    final_df = pd.concat(
-        [education, gender, annual_income, fatty_liver, data_df['DR1TPROT'], data_df['DR1TTFAT'], data_df['DR1TSODI'],
-         data_df['DR1TCAFF'], data_df['DR1TCARB']], axis=1)
+    final_df = pd.concat([education, gender, annual_income, fatty_liver, data_df['DR1TPROT'], data_df['DR1TTFAT'], data_df['DR1TSODI'], data_df['DR1TCAFF'], data_df['DR1TCARB']], axis=1)
 
     # Plot distribution of fatty liver stages.
     ax = sns.countplot(x='LUXCAPM', data=final_df)
@@ -217,15 +218,19 @@ if __name__ == '__main__':
     ax.set_title('Counplot of Fatty Liver')
     plt.show()
 
+
     # Drop non-useful columns and the outcome column
-    final_df.drop(['LUXCAPM', 'Refused', 'Don\'t Know', '20,000 and over', '0 to 4,999'], axis=1, inplace=True)
+    final_df.drop(['LUXCAPM' ,'Refused', 'Don\'t Know', '20,000 and over'], axis=1, inplace=True)
     final_df = final_df.apply(pd.to_numeric)
     labels = labels.apply(pd.to_numeric)
 
-    # Logistic Regression
+
+    # Create test and train sets.
     x_train, x_test, y_train, y_test = train_test_split(
         final_df, labels, test_size=0.3, random_state=0
     )
+
+    # Logistic Regression scikit
     logmodel = LogisticRegression()
     logmodel.fit(x_train, np.ravel(y_train))
     predict_log = logmodel.predict(x_test)
@@ -236,7 +241,7 @@ if __name__ == '__main__':
 
     # Confusion matrix
     cm = confusion_matrix(y_test, predict_log)
-    plt.figure(figsize=(9, 9))
+    plt.figure(figsize=(9,9))
     sns.heatmap(cm, fmt='g', annot=True, square=True)
     plt.ylabel('Actual Label')
     plt.xlabel("Predicted Label")
@@ -245,7 +250,23 @@ if __name__ == '__main__':
 
     # Variable importance
     importance = logmodel.coef_.flatten()
-    plt.figure(figsize=(10, 10))
+    plt.figure(figsize=(10,10))
     plt.barh(final_df.columns, importance)
     plt.show()
+
+    # Logistic Regression statsmodel
+    logreg = sm.Logit(y_train, x_train).fit()
+    print(logreg.summary())
+    logpredict = logreg.predict(x_test)
+    prediction = list(map(round, logpredict))
+    cm_statsmodel = confusion_matrix(y_test, prediction)
+    score_statsmodel = accuracy_score(y_test, prediction)
+    plt.figure(figsize=(9,9))
+    sns.heatmap(cm_statsmodel, fmt='g', annot=True, square=True)
+    plt.ylabel('Actual Label')
+    plt.xlabel("Predicted Label")
+    plt.title(f'Statsmodel Confusion Matrix; Acc Score: {score_statsmodel}', size=15)
+    plt.show()
+
+    print(logreg.pvalues)
 # %%
