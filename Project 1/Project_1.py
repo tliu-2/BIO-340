@@ -1,14 +1,20 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
-from sklearn.metrics import classification_report, accuracy_score
+from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.preprocessing import StandardScaler
 import seaborn as sns
 
 
 def set_fatty_liver_categories(stiffness):
+    """
+    Given liver stiffness value, assigns a string labeled Normal, Moderate, Severe, or Cirrhosis.
+    :param stiffness: float of Liver stiffness in kPa.
+    :return: string of bucket to value is to be categorized in.
+    """
     if stiffness < 7.5:
         return "Normal"
     elif 7.5 <= stiffness < 10:
@@ -19,8 +25,12 @@ def set_fatty_liver_categories(stiffness):
         return "Cirrhosis"
 
 
-
 def adjust_income_values(income):
+    """
+    Given an income code, assigns a descriptive label corresponding to NHANES codebook.
+    :param income: int income code.
+    :return: string descriptive label for income codes.
+    """
     if income == 1:
         return "0 to 4,999"
     elif income == 2:
@@ -58,6 +68,11 @@ def adjust_income_values(income):
 
 
 def adjust_edu_values(edu):
+    """
+    Assigns education level codes a descriptive label.
+    :param edu: int education level code.
+    :return: string descriptive label for education level code.
+    """
     if edu == 1:
         return "Less than high school degree"
     elif edu == 2:
@@ -73,6 +88,11 @@ def adjust_edu_values(edu):
 
 
 def adjust_age_values(age):
+    """
+    Given age code, assigns a descriptive label.
+    :param age: int age code.
+    :return: string descriptive label for an age code.
+    """
     if age == 1:
         return "<20 years"
     elif age == 2:
@@ -84,69 +104,148 @@ def adjust_age_values(age):
     elif age == ".":
         return ""
 
+
 def adjust_gender_values(gender):
+    """
+    Assigns string label to gender code.
+    :param gender: int gender code, 1 == male, 2 == female
+    :return: string label for male or female.
+    """
     if gender == 1:
         return "Male"
     elif gender == 2:
         return "Female"
 
+
+def adjust_cap_values(cap):
+    """
+    Given a CAP score for liver steatosis, assigns stage levels for severity.
+    :param cap: int CAP score.
+    :return: string label for liver steatosis severity.
+    """
+    if cap < 238:
+        return "Normal"
+    elif 238 <= cap <= 260:
+        return "S1"
+    elif 260 < cap <= 290:
+        return "S2"
+    elif cap > 290:
+        return "S3"
+
+
+def calculate_bmi(weight, height):
+    """
+    Calculates bmi given weight and height and assigns a category for that bmi.
+    :param weight: float weight in kilograms (kg).
+    :param height: float height in centimeters (cm).
+    :return: string category for calculated bmi.
+    """
+    height = height / 100  # Convert to meters
+    bmi = weight / (height ** 2)
+    if bmi < 18.5:
+        return "Underweight"
+    elif 18.5 <= bmi <= 24.9:
+        return "Normal Weight"
+    elif 25 <= bmi <= 29.9:
+        return "Overweight"
+    elif bmi >= 30:
+        return "Obese"
+
+
 if __name__ == '__main__':
+    # Import necessary files.
     demographics = pd.read_csv('Z:/School/BIO-340/Project 1/DEMO_J.csv', encoding='latin1')
     liver_csv = pd.read_csv('Z:/School/BIO-340/Project 1/LUX_J.csv', encoding='latin1')
-    dietary_csv =pd.read_csv('Z:/School/BIO-340/Project 1/DR1TOT_J.csv', encoding='latin1')
+    dietary_csv = pd.read_csv('Z:/School/BIO-340/Project 1/DR1TOT_J.csv', encoding='latin1')
+    body_csv = pd.read_csv('Z:/School/BIO-340/Project 1/BMX_J.csv', encoding='latin1')
+
+    # Select columns of interest - see data_variables_to_use.txt for descritpions.
     demo_x = pd.DataFrame(demographics[['SEQN', 'DMDHRAGZ', 'DMDHREDZ', 'INDHHIN2', 'RIAGENDR']])
-    diet_x = pd.DataFrame(dietary_csv[['SEQN', 'DR1TPROT', 'DR1_320Z']])
-    liver_y = pd.DataFrame(liver_csv[['SEQN', 'LUXSMED']])
+    diet_x = pd.DataFrame(dietary_csv[[
+        'SEQN', 'DR1TPROT', 'DR1TTFAT', 'DR1TSODI', 'DR1TCAFF', 'DR1TCARB'
+    ]])
+    body_x = pd.DataFrame(body_csv[['SEQN', 'BMXWT', 'BMXHT']])
+
+    # Select desired outcomes - ultimately use LUXCAPM.
+    liver_y = pd.DataFrame(liver_csv[['SEQN', 'LUXSMED', 'LUXCAPM']])
 
     # Merge the various csvs on SEQN
     data_df = demo_x.merge(liver_y, on='SEQN', how='inner')
     data_df = data_df.merge(diet_x, on='SEQN', how='inner')
+    data_df = data_df.merge(body_x, on='SEQN', how='inner')
     data_df.dropna(axis=0, inplace=True)
 
     # Standardize continuous variables
     scalar = StandardScaler()
     data_df['DR1TPROT'] = scalar.fit_transform(data_df[['DR1TPROT']])
-    data_df['DR1_320Z'] = scalar.fit_transform(data_df[['DR1_320Z']])
+    data_df['DR1TTFAT'] = scalar.fit_transform(data_df[['DR1TTFAT']])
+    data_df['DR1TSODI'] = scalar.fit_transform(data_df[['DR1TSODI']])
+    data_df['DR1TCAFF'] = scalar.fit_transform(data_df[['DR1TCAFF']])
+    data_df['DR1TCARB'] = scalar.fit_transform(data_df[['DR1TCARB']])
 
-    # Create dummy variables for the categorical variables.
-    age = pd.get_dummies(data_df['DMDHRAGZ'].apply(adjust_age_values))
+    # Create dummy variables for variables.
+    ## age = pd.get_dummies(data_df['DMDHRAGZ'].apply(adjust_age_values))
     education = pd.get_dummies(data_df['DMDHREDZ'].apply(adjust_edu_values))
     annual_income = pd.get_dummies(data_df['INDHHIN2'].apply(adjust_income_values), drop_first=True)
     gender = pd.get_dummies(data_df['RIAGENDR'].apply(adjust_gender_values))
+    bmi = pd.get_dummies(data_df.apply(lambda x: calculate_bmi(x['BMXWT'], x['BMXHT']), axis=1))
 
+    liver_damage = pd.get_dummies(data_df['LUXSMED'].apply(set_fatty_liver_categories))
+    fatty_liver = data_df['LUXCAPM'].apply(adjust_cap_values)
 
-    fatty_liver = data_df['LUXSMED'].apply(set_fatty_liver_categories)
-    final_df = pd.concat([gender, education, annual_income, fatty_liver, data_df['DR1TPROT'], data_df['DR1_320Z']], axis=1)
+    # df to input into logistic regression
+    final_df = pd.concat(
+        [education, gender, annual_income, fatty_liver, data_df['DR1TPROT'], data_df['DR1TTFAT'], data_df['DR1TSODI'],
+         data_df['DR1TCAFF'], data_df['DR1TCARB']], axis=1)
 
-    sns.countplot(x='LUXSMED', data=final_df).set(title='Countplot of fatty liver')
+    # Plot distribution of fatty liver stages.
+    ax = sns.countplot(x='LUXCAPM', data=final_df)
+    ax.bar_label(ax.containers[0])
+    ax.set_title('Counplot of Fatty Liver')
     plt.show()
 
     # Create outcome labels.
-    labels = pd.DataFrame(final_df['LUXSMED'])
-    labels.LUXSMED[labels.LUXSMED == 'Normal'] = 0
-    labels.LUXSMED[labels.LUXSMED == 'Moderate'] = 1
-    labels.LUXSMED[labels.LUXSMED == 'Severe'] = 1
-    labels.LUXSMED[labels.LUXSMED == 'Cirrhosis'] = 1
+    labels = pd.DataFrame(final_df['LUXCAPM'])
+    labels.LUXCAPM[labels.LUXCAPM == 'Normal'] = 0
+    labels.LUXCAPM[labels.LUXCAPM == 'S1'] = 1
+    labels.LUXCAPM[labels.LUXCAPM == 'S2'] = 1
+    labels.LUXCAPM[labels.LUXCAPM == 'S3'] = 1
 
-    sns.countplot(x='LUXSMED', data=labels).set(title='Countplot of fatty liver')
+    # Plot distribution of label categories
+    ax = sns.countplot(x='LUXCAPM', data=labels)
+    ax.bar_label(ax.containers[0])
+    ax.set_title('Counplot of Fatty Liver')
     plt.show()
 
-    labels = labels.apply(pd.to_numeric)
     # Drop non-useful columns and the outcome column
-    final_df.drop(['LUXSMED' ,'Refused', 'Don\'t Know', '20,000 and over'], axis=1, inplace=True)
+    final_df.drop(['LUXCAPM', 'Refused', 'Don\'t Know', '20,000 and over', '0 to 4,999'], axis=1, inplace=True)
     final_df = final_df.apply(pd.to_numeric)
+    labels = labels.apply(pd.to_numeric)
 
     # Logistic Regression
     x_train, x_test, y_train, y_test = train_test_split(
         final_df, labels, test_size=0.3, random_state=0
     )
-    logmodel = LogisticRegression(multi_class='multinomial', class_weight='balanced')
+    logmodel = LogisticRegression()
     logmodel.fit(x_train, np.ravel(y_train))
     predict_log = logmodel.predict(x_test)
-    print(classification_report(y_test, predict_log))
 
+    # Model evaluation starts here:
+    print(classification_report(y_test, predict_log))
+    score = logmodel.score(x_test, y_test)
+
+    # Confusion matrix
+    cm = confusion_matrix(y_test, predict_log)
+    plt.figure(figsize=(9, 9))
+    sns.heatmap(cm, fmt='g', annot=True, square=True)
+    plt.ylabel('Actual Label')
+    plt.xlabel("Predicted Label")
+    plt.title(f'Accuracy Score: {score}', size=15)
+    plt.show()
+
+    # Variable importance
     importance = logmodel.coef_.flatten()
-    plt.rcParams['figure.figsize'] = (10, 10)
+    plt.figure(figsize=(10, 10))
     plt.barh(final_df.columns, importance)
     plt.show()
 # %%
