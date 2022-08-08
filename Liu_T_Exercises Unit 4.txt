@@ -1,0 +1,89 @@
+
+Exercise 1 - Debug code for calculating GC content
+Debug the following code for calculating GC content:
+
+# Calculate the frequency of G & C nucleotides in a sequence
+seq = "ATATGCTACTACTCGGCTACG"
+gc_content = seq.count(G) + seq.count(C)/len(seq)
+---------------------------------------------------------------------------
+NameError                                 Traceback (most recent call last)
+<ipython-input-119-c48516989ebf> in <module>
+      2
+      3 seq = "ATATGCTACTACTCGGCTACG"
+----> 4 gc_content = seq.count(G) + seq.count(C)/len(seq)
+NameError: name 'G' is not defined
+----------------------------------------------------------------------------
+
+In this case, quotation marks are missing around G inside seq.count(). The correct
+syntax should be seq.count('G') or seq.count("G").
+
+
+
+Exercise 2 - Debug a random bird generator
+Debug the following code for generating random bird common names.
+
+# Code starts here:
+from random import choice
+n_birds_to_generate = 10
+
+descriptors = ["Emperor","Red-breasted","Warbling","Vampire","Night",\
+               "Sea","Greater","Pond","Jungle","Barn","Drab","Lesser","Spotted",\
+               "Northern","Southern","Long-beaked","Crested","Fairy","Bald"]
+
+bird_types = ["Falcon","Merganser","Owl","Eagle","Hawk","Penguin",\
+             "Dodo","Gull","Warbler","Fowl","Goose","Hummingbird","Snowcock"]
+
+random_birds = []
+
+for i in range(n_birds_to_generate)
+    descriptor = choice(descriptors)
+
+    bird_type = choice(bird_types)
+
+    random_bird = f"{descriptor} {bird_type}"
+    random_birds.append(random_bird)
+
+---------------------------------------------------------------------------
+  File "<ipython-input-147-696f7c200593>", line 13
+    for i in range(n_birds_to_generate)
+                                       ^
+SyntaxError: invalid syntax
+---------------------------------------------------------------------------
+
+This for loop is missing a colon at the end of the line. To fix this, the loop should look like:
+for i in range(n_birds_to_generate):
+
+
+
+Exercise 3 Debug code for simulating Mendelian Inheritance
+Debug the following code. Note that there is more than one mistake with the code that you will need to fix.
+
+#This code simules Mendelian inheritance
+#Each parent has two alleles or genetic variants: A and a
+
+#Each gamete (sperm or egg) gets one random allele from
+#the parent that produced that gamete
+
+#The offspring genotype is a combination of these
+
+from random import choice
+
+maternal_alleles = ["A","a"]
+paternal_alleles = ["A","a"]
+
+egg_allele = choice(maternal_alleles
+sperm_allele = choice(paternal_alleles)
+
+offspring_genotype = sorted(egg_allele + sperm_alele)
+print(f"The genotype of the offspring is {offspring_genotype}")
+---------------------------------------------------------------------------
+  File "<ipython-input-181-eb0efb489b6d>", line 15
+    sperm_allele = choice(paternal_alleles)
+               ^
+SyntaxError: invalid syntax
+---------------------------------------------------------------------------
+
+In this code, the line with egg_allele is missing a parenthesis at the end of the line. This line should
+look like:
+egg_allele = choice(maternal_alleles)
+
