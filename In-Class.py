@@ -1,5 +1,5 @@
 import pprint  # pretty print for printing dictionaries
-
+from random import choice
 
 # Lecture Exercises:
 # FASTA Parser:
@@ -96,6 +96,12 @@ def calc_codon_usage(rna_seq):
     return seq_dict
 
 
+# Monte Carlo
+def roll_die(sides=[1, 2, 3, 4, 5, 6]):
+    result = choice(sides)
+    return result
+
+
 if __name__ == '__main__':
     # f = open("C:/Users/TNYae/Desktop/BIO-340/test.ffn")
     f = open("Z:/School/BIO-340/test.ffn")
@@ -109,5 +115,7 @@ if __name__ == '__main__':
     print('Codon Usage:')
     codon_usage = calc_codon_usage(rna)
     pprint.pprint(codon_usage)  # Pretty print the dictionary
+
+    # Monte Carlo
 
 # %%
