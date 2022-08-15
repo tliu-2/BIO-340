@@ -14,6 +14,7 @@ def normalize_table(_df):
 
     # Mutable workaround for DataFrames, create actual copy of passed df.
     _df = pd.DataFrame(_df, copy=True)
+    # [:, 1:] means get all rows, and all columns except the 0th column or first column
     col_sum = _df.iloc[:, 1:].sum()  # Get the sum of each column
     _df.iloc[:, 1:] = _df.iloc[:, 1:].div(col_sum)  # Divide each column by col_sum
 
@@ -34,6 +35,7 @@ def calc_shannon_div_index(_df):
     orig_df = pd.DataFrame(_df, copy=True)
 
     # Normalize table to get proportions.
+    # [:, 1:] means get all rows, and all columns except the 0th column or first column
     col_sum = _df.iloc[:, 1:].sum()
     _df.iloc[:, 1:] = _df.iloc[:, 1:].div(col_sum)
 
