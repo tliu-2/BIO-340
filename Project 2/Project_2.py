@@ -25,6 +25,7 @@ def set_fatty_liver_categories(stiffness):
     elif stiffness >= 14:
         return "Cirrhosis"
 
+
 def adjust_edu_values(edu):
     """
     Assigns education level codes a descriptive label.
@@ -46,6 +47,7 @@ def adjust_edu_values(edu):
     elif edu == 9:
         return "Don't Know"
 
+
 def adjust_gender_values(gender):
     """
     Assigns string label to gender code.
@@ -56,6 +58,7 @@ def adjust_gender_values(gender):
         return "Male"
     elif gender == 2:
         return "Female"
+
 
 def adjust_cap_values(cap):
     """
@@ -80,7 +83,7 @@ if __name__ == '__main__':
     trygly = pd.read_csv('./P_TRIGLY.csv', encoding='latin1')
     albu_cr = pd.read_csv('./P_ALB_CR.csv', encoding='latin1')
 
-    # Select columns of interest - see data_variables_to_use.txt for descritpions.
+    # Select columns of interest
     demo_x = pd.DataFrame(demographics[['SEQN', 'RIAGENDR', 'DMDEDUC2', 'RIDAGEYR']])
     trygly_x = pd.DataFrame(trygly[['SEQN', 'LBXTR']])
     albu_cr_x = pd.DataFrame(albu_cr[['SEQN', 'URXUMS', 'URXUCR']])
@@ -110,8 +113,10 @@ if __name__ == '__main__':
     liver_damage = pd.get_dummies(data_df['LUXSMED'].apply(set_fatty_liver_categories))
     fatty_liver = data_df['LUXCAPM'].apply(adjust_cap_values)
 
-    # df to input into logistic regression
-    final_df = pd.concat([education, gender, fatty_liver, data_df['LBXTR'], data_df['RIDAGEYR'], data_df['URXUCR'], data_df['URXUMS']], axis=1)
+    # df to input into logistic regression model
+    final_df = pd.concat(
+        [education, gender, fatty_liver, data_df['LBXTR'], data_df['RIDAGEYR'], data_df['URXUCR'], data_df['URXUMS']],
+        axis=1)
 
     # Plot distribution of fatty liver stages.
     ax = sns.countplot(x='LUXCAPM', data=final_df)
@@ -132,12 +137,10 @@ if __name__ == '__main__':
     ax.set_title('Counplot of Fatty Liver')
     plt.show()
 
-
     # Drop non-useful columns and the outcome column
     final_df.drop(['LUXCAPM', 'Don\'t Know'], axis=1, inplace=True)
     final_df = final_df.apply(pd.to_numeric)
     labels = labels.apply(pd.to_numeric)
-
 
     # Create test and train sets.
     x_train, x_test, y_train, y_test = train_test_split(
@@ -155,7 +158,7 @@ if __name__ == '__main__':
 
     # Confusion matrix
     cm = confusion_matrix(y_test, predict_log)
-    plt.figure(figsize=(9,9))
+    plt.figure(figsize=(9, 9))
     sns.heatmap(cm, fmt='g', annot=True, square=True)
     plt.ylabel('Actual Label')
     plt.xlabel("Predicted Label")
@@ -164,18 +167,25 @@ if __name__ == '__main__':
 
     # Variable importance
     importance = logmodel.coef_.flatten()
-    plt.figure(figsize=(10,10))
+    plt.figure(figsize=(10, 10))
     plt.barh(final_df.columns, importance)
     plt.show()
 
     # Logistic Regression statsmodel
+
+    # Assign for clarity
+    x_sm = final_df
+    y_sm = fatty_liver
+
     logreg = sm.Logit(y_train, x_train).fit()
     print(logreg.summary())
+    logreg_summary_table = logreg.summary().tables[0].as_html()
+    logreg_summary_table = pd.read_html(logreg_summary_table, header=0,index_col=0)[0]
     logpredict = logreg.predict(x_test)
     prediction = list(map(round, logpredict))
     cm_statsmodel = confusion_matrix(y_test, prediction)
     score_statsmodel = accuracy_score(y_test, prediction)
-    plt.figure(figsize=(9,9))
+    plt.figure(figsize=(9, 9))
     sns.heatmap(cm_statsmodel, fmt='g', annot=True, square=True)
     plt.ylabel('Actual Label')
     plt.xlabel("Predicted Label")
@@ -193,3 +203,4 @@ if __name__ == '__main__':
 
     odds_ratios = np.exp(odds_ratios)
     print(odds_ratios)
+#%%
